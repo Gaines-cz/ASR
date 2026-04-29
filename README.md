@@ -311,6 +311,99 @@ echo 'your_key' > glm_api_key
 
 ---
 
+## VAD 技术详解
+
+### 传统 VAD 常用方法
+
+#### 1. 能量检测 (Energy-based)
+```python
+# 最简单：计算短时能量
+energy = sum(x[n]**2 for n in range(N)) / N
+is_speech = energy > threshold  # 阈值通常0.01或自适应
+```
+
+#### 2. 频谱特征 (Spectral)
+- **过零率 (ZCR)**：语音高频多，静音低
+```python
+zcr = sum(abs(sign(x[n]) - sign(x[n-1]))) / N
+```
+- **频谱质心/带宽**：语音有特定频谱特征
+
+#### 3. 滤波器法
+- **带通滤波**：保留300Hz~3400Hz（语音频段）
+- **WebRTC VAD**：用GMM(高斯混合模型)判断
+
+#### 4. 深度学习法
+- **Silero VAD**：预训练模型，精度高
+```python
+# pip install silero-vad
+from silero_vad import load_silero_vad
+vad = load_silero_vad()
+speech_probs = vad(audio, sample_rate=16000)
+```
+
+#### 5. 自适应阈值
+- 根据环境噪声动态调整阈值
+```python
+noise_floor = 0.95 * noise_floor + 0.05 * current_energy
+threshold = noise_floor * 2  # 动态阈值
+```
+
+### 本项目 VAD 实现
+
+本项目采用**纯前端自闭环方案**，核心分三块：
+
+#### 1. 能量计算
+每一帧 PCM 音频计算 RMS 均方根能量：
+```javascript
+let energy = 0;
+for (let i = 0; i < samples.length; i++) {
+    energy += samples[i] * samples[i];
+}
+energy = Math.sqrt(energy / samples.length);
+const isSpeech = energy >= 0.01;  // 阈值0.01
+```
+每帧 4096 样本，16kHz 下约 256 毫秒。
+
+#### 2. 三状态机
+```
+         energy ≥ 0.01
+    ┌──────────┐
+───►│   IDLE   │──── 太短<300ms ────► 丢弃
+    └────┬─────┘
+         │ energy ≥ 0.01
+         ▼
+    ┌──────────┐
+───►│  SPEECH  │◄── 检测到语音 ────────┐
+    └────┬─────┘                        │
+         │ 15帧静音 + ≥300ms            │
+         ▼                              │
+    ┌──────────┐                        │
+    │  SILENCE │──── 检测到语音 ────────┘
+    └──────────┘
+```
+
+关键参数：
+- 能量阈值：0.01
+- 连续15帧静音判结束（约750ms）
+- 最短有效语音300ms，避免误触发
+
+#### 3. 滑动窗口配合
+音频帧持续往缓冲推送，仅两种情况发送数据：
+- 缓冲攒够3秒
+- 语音状态切换到静音状态（说话结束）
+
+### 方案对比
+
+| 方案 | 优势 | 劣势 |
+|------|------|------|
+| 本项目 | 零依赖、无延迟、前端自闭环 | 固定阈值，复杂噪声环境效果差 |
+| Silero VAD | 精度高、自适应 | 需加载模型、有推理延迟 |
+| WebRTC VAD | 工业级、成熟 | 依赖库、参数调优复杂 |
+| 自适应能量 | 简单、实时性好 | 需要噪声样本初始化 |
+
+---
+
 ## 后续优化方向
 
 ```
