@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# Virtual environment
+.venv/
+
+# IDE
+.idea/
+
+# OS
+.DS_Store
+*.swp
+
+# API key (keep template)
+glm_api_key

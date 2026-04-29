@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoGLM ASR Web Client</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AutoGLM ASR Web Client</h1>
+            <p class="subtitle">基于 ChatGLM autoglm-asr-vllm 的语音转文字服务</p>
+        </header>
+
+        <main>
+            <!-- File Transcription Section -->
+            <section class="section" id="file-section">
+                <h2>音频文件转写</h2>
+                <div class="file-upload">
+                    <input type="file" id="file-input" accept="audio/*">
+                    <button id="transcribe-btn" class="btn primary">开始</button>
+                    <button id="export-file-btn" class="btn secondary hidden">导出结果</button>
+                </div>
+                <div id="file-result" class="result-area hidden"></div>
+            </section>
+
+            <!-- Real-time Recording Section -->
+            <section class="section" id="recording-section">
+                <h2>实时语音转录</h2>
+                <div class="recording-controls">
+                    <button id="start-recording-btn" class="btn success">开始</button>
+                    <button id="stop-recording-btn" class="btn danger" disabled>停止</button>
+                    <span id="recording-status" class="status-text"></span>
+                </div>
+                <div id="session-info" class="session-info hidden">
+                    Session ID: <span id="session-id"></span>
+                </div>
+
+                <!-- Live Transcript Section -->
+                <div id="live-section">
+                    <h3>滚动字幕</h3>
+                    <div id="live-transcript" class="live-transcript">
+                        <p class="placeholder">转写结果将在这里实时显示...</p>
+                    </div>
+                </div>
+
+                <!-- Final Result Section -->
+                <div id="final-section">
+                    <h3>最终结果</h3>
+                    <div id="final-transcript" class="final-transcript">
+                        <p class="placeholder">最终转写结果将显示在这里...</p>
+                    </div>
+                    <button id="export-final-btn" class="btn secondary hidden">导出结果</button>
+                </div>
+            </section>
+
+            <!-- Error Display -->
+            <section class="section error-section hidden" id="error-section">
+                <h2>错误提示</h2>
+                <div id="error-message" class="error-message"></div>
+            </section>
+        </main>
+
+        <footer>
+            <p>当前接口为单次音频处理接口，实时能力由客户端切片 + 服务端多次单次转写模拟实现</p>
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
